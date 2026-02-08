@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Attention Simulation (GPT-2 Style)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar panel">
+        <div class="brand-wrap">
+          <p class="eyebrow">Educational Simulation</p>
+          <h1>Transformer Explainer</h1>
+        </div>
+
+        <div class="toolbar">
+          <div class="tool sentence-tool">
+            <label for="sentenceSelect">Example Sentence</label>
+            <select id="sentenceSelect"></select>
+          </div>
+
+          <div class="tool compact">
+            <label for="headSelect">Head</label>
+            <select id="headSelect"></select>
+          </div>
+
+          <div class="tool compact">
+            <label for="tempRange">Temperature <span id="tempValue">0.8</span></label>
+            <input id="tempRange" type="range" min="0.3" max="1.5" step="0.1" value="0.8" />
+          </div>
+
+          <div class="tool compact">
+            <label for="topkRange">Top-k <span id="topkValue">5</span></label>
+            <input id="topkRange" type="range" min="1" max="12" step="1" value="5" />
+          </div>
+
+          <div class="tool compact">
+            <label for="genCountRange">Generate <span id="genCountValue">6</span></label>
+            <input id="genCountRange" type="range" min="1" max="12" step="1" value="6" />
+          </div>
+
+          <div class="action-row">
+            <button id="generateBtn" class="action-btn" type="button">Generate</button>
+            <button id="resetBtn" class="action-btn ghost" type="button">Reset</button>
+          </div>
+        </div>
+
+        <div class="chip-row">
+          <span class="chip">Model: GPT-2 Small (simulation)</span>
+          <span class="chip">Layer: 12 (simplified visual pass)</span>
+          <span class="chip">Heads: <span id="headCountLabel"></span></span>
+          <span class="chip">Causal Mask: Active</span>
+        </div>
+      </header>
+
+      <section class="panel stage-panel">
+        <div class="stage-grid">
+          <aside class="lane lane-left">
+            <div class="lane-head">
+              <h2>Embedding</h2>
+              <p>Input token stream</p>
+            </div>
+            <div id="tokenStream" class="token-stream token-vertical"></div>
+          </aside>
+
+          <section class="lane lane-center">
+            <div class="lane-head">
+              <h2>Attention Core</h2>
+              <p>Q/K/V + masked self-attention map</p>
+            </div>
+
+            <div class="flow-artboard">
+              <svg width="1240" height="360" viewBox="0 0 1240 360" aria-label="Transformer flow" role="img">
+                <defs>
+                  <linearGradient id="qLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#9a8bff" stop-opacity="0.22" />
+                    <stop offset="100%" stop-color="#7b66ff" stop-opacity="0.85" />
+                  </linearGradient>
+                  <linearGradient id="kLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#86b8ff" stop-opacity="0.2" />
+                    <stop offset="100%" stop-color="#5ca1ff" stop-opacity="0.82" />
+                  </linearGradient>
+                  <linearGradient id="vLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#8de7d3" stop-opacity="0.2" />
+                    <stop offset="100%" stop-color="#35c8a9" stop-opacity="0.82" />
+                  </linearGradient>
+                </defs>
+
+                <rect x="12" y="18" width="232" height="324" rx="18" class="flow-card" />
+                <rect x="278" y="50" width="304" height="262" rx="20" class="flow-card soft" />
+                <rect x="626" y="40" width="182" height="282" rx="18" class="flow-card" />
+                <rect x="840" y="40" width="390" height="282" rx="18" class="flow-card" />
+
+                <text x="30" y="44" class="flow-title">Input</text>
+                <text x="302" y="78" class="flow-title">Attention</text>
+                <text x="648" y="68" class="flow-title">MLP</text>
+                <text x="862" y="68" class="flow-title">Probabilities</text>
+
+                <text x="34" y="96" class="flow-token">Data</text>
+                <text x="34" y="128" class="flow-token">visualization</text>
+                <text x="34" y="160" class="flow-token">empowers</text>
+                <text x="34" y="192" class="flow-token">users</text>
+                <text x="34" y="224" class="flow-token">to</text>
+                <text x="34" y="256" class="flow-token">visualize</text>
+
+                <text x="300" y="112" class="flow-label q">Q</text>
+                <text x="300" y="148" class="flow-label k">K</text>
+                <text x="300" y="184" class="flow-label v">V</text>
+
+                <path d="M190 84 C240 84, 246 104, 286 104" class="flow-ribbon q" />
+                <path d="M190 116 C242 116, 250 110, 286 104" class="flow-ribbon q" />
+                <path d="M190 148 C244 148, 254 116, 286 104" class="flow-ribbon q" />
+
+                <path d="M190 116 C244 116, 252 140, 286 140" class="flow-ribbon k" />
+                <path d="M190 148 C246 148, 256 146, 286 140" class="flow-ribbon k" />
+                <path d="M190 180 C248 180, 260 152, 286 140" class="flow-ribbon k" />
+
+                <path d="M190 148 C248 148, 256 176, 286 176" class="flow-ribbon v" />
+                <path d="M190 180 C252 180, 260 182, 286 176" class="flow-ribbon v" />
+                <path d="M190 212 C256 212, 266 188, 286 176" class="flow-ribbon v" />
+
+                <rect x="342" y="94" width="218" height="172" rx="14" class="attn-box" />
+                <text x="356" y="120" class="flow-small">Masked Dot-Product</text>
+
+                <circle cx="384" cy="150" r="7" class="attn-dot strong" />
+                <circle cx="414" cy="150" r="7" class="attn-dot mid" />
+                <circle cx="444" cy="150" r="7" class="attn-dot faint" />
+                <circle cx="474" cy="150" r="7" class="attn-dot faint" />
+
+                <circle cx="384" cy="178" r="7" class="attn-dot strong" />
+                <circle cx="414" cy="178" r="7" class="attn-dot strong" />
+                <circle cx="444" cy="178" r="7" class="attn-dot mid" />
+                <circle cx="474" cy="178" r="7" class="attn-dot faint" />
+
+                <circle cx="384" cy="206" r="7" class="attn-dot strong" />
+                <circle cx="414" cy="206" r="7" class="attn-dot strong" />
+                <circle cx="444" cy="206" r="7" class="attn-dot strong" />
+                <circle cx="474" cy="206" r="7" class="attn-dot mid" />
+
+                <path d="M560 176 C592 176, 608 176, 626 176" class="flow-ribbon out" />
+
+                <rect x="674" y="96" width="24" height="170" rx="12" class="mlp-col" />
+                <rect x="720" y="84" width="24" height="194" rx="12" class="mlp-col" />
+                <rect x="766" y="96" width="24" height="170" rx="12" class="mlp-col" />
+
+                <text x="862" y="116" class="prob-word strong">visualize</text>
+                <rect x="986" y="102" width="140" height="10" rx="5" class="prob-bar strong" />
+                <text x="1196" y="112" class="prob-val strong">54.7%</text>
+
+                <text x="862" y="154" class="prob-word">create</text>
+                <rect x="986" y="140" width="78" height="10" rx="5" class="prob-bar" />
+                <text x="1196" y="150" class="prob-val">20.8%</text>
+
+                <text x="862" y="192" class="prob-word">see</text>
+                <rect x="986" y="178" width="52" height="10" rx="5" class="prob-bar" />
+                <text x="1196" y="188" class="prob-val">12.1%</text>
+
+                <text x="862" y="230" class="prob-word">make</text>
+                <rect x="986" y="216" width="28" height="10" rx="5" class="prob-bar" />
+                <text x="1196" y="226" class="prob-val">6.3%</text>
+              </svg>
+            </div>
+
+            <div id="attentionMatrix" class="matrix-wrap"></div>
+          </section>
+
+          <aside class="lane lane-right">
+            <div class="lane-head">
+              <h2>Probabilities</h2>
+              <p>Next token distribution</p>
+            </div>
+            <div id="nextTokenBox" class="next-token-box"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="detail-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Query Token Details</h2>
+            <p>Attention weights for active query token</p>
+          </div>
+          <div id="attentionBars" class="bars"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Q/K/V Snapshot</h2>
+            <p>Vector values on selected head</p>
+          </div>
+          <div id="qkvSnapshot" class="qkv-grid"></div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Generated Continuation</h2>
+          <p>Autoregressive sampling from the latest token</p>
+        </div>
+        <div id="generatedTokens" class="token-stream generated-stream"></div>
+        <div id="generatedText" class="generated-text"></div>
+      </section>
+
+      <footer class="footnote">
+        This interactive view is a simplified GPT-style simulation: token embeddings, Q/K/V projections, causal masking, and softmax sampling.
+      </footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
